@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "ollama": "^0.5.16"
+    "ollama": "^0.5.16",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
