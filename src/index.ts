@@ -1,13 +1,5 @@
 import ollama from "ollama";
-import { z } from "zod";
-
-const taskSchema = z.object({
-  category: z.enum(["coding", "research", "writing", "planning", "other"]),
-  priority: z.enum(["low", "medium", "high"]),
-  summary: z.string(),
-});
-
-const taskJsonSchema = z.toJSONSchema(taskSchema);
+import { parseAndValidateTask, taskJsonSchema } from "./task.js";
 
 async function main() {
   const response = await ollama.chat({
@@ -30,21 +22,15 @@ JSON 객체만 반환하고 markdown code fence나 추가 설명은 포함하지
     ],
   });
 
-  let parsedResponse: unknown;
-
-  try {
-    parsedResponse = JSON.parse(response.message.content);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`JSON parsing failed: ${message}`);
-    process.exitCode = 1;
-    return;
-  }
-
-  const validationResult = taskSchema.safeParse(parsedResponse);
+  const validationResult = parseAndValidateTask(response.message.content);
 
   if (!validationResult.success) {
-    console.error("Zod validation failed:", validationResult.error.issues);
+    if (validationResult.type === "json_parsing_failed") {
+      console.error(`JSON parsing failed: ${validationResult.message}`);
+    } else {
+      console.error("Zod validation failed:", validationResult.issues);
+    }
+
     process.exitCode = 1;
     return;
   }
